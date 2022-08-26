@@ -1,0 +1,27 @@
+{
+  "discord": {
+    "token": "", // Discord bot access token
+    "prefix": "!", // Command prefix (ex: !start, @start, .start etc)
+    "access": [
+      {
+        "id": "252515070058299393", // User Discord ID
+        "level": 1 // User access level
+      }
+    ]
+  },
+  // XXX: Reimplement from previous bot version to support multiple server instances
+  "logs": [
+    {
+      "automatic": true, // Parse log files once bot is started
+      "id": "server1", // Unique ID for this server log - !start server1 (start log output?)
+      "file": "/path/to/Geneshift01/data/log.txt", // Path to Geneshift log
+      "channel": "0000000000000000000" // Channel output ID (required for `automatic`)
+    },
+    {
+      "automatic": false, // Parse log files once bot is started
+      "id": "server2", // Unique ID for this server log - !stop server2 (stop log output?)
+      "file": "/path/to/Geneshift02/data/log.txt", // Path to Geneshift log
+      "channel": "0000000000000000000" // Channel output ID (optional)
+    }
+  ]
+}
