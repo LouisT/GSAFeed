@@ -105,6 +105,7 @@ func main() {
 					tailer.Stop()
 					tailer.Cleanup()
 					delete(Onces, id)
+                    delete(Tails, id)
 					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***=== Stopping game feed! (ID: %s) ===***", id)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
@@ -116,6 +117,7 @@ func main() {
 						tailer.Stop()
 						tailer.Cleanup()
 						delete(Onces, id)
+                        delete(Tails, id)
 						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***=== Stopping game feed! (ID: %s) ===***", id)); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
