@@ -1,7 +1,16 @@
 {
   "discord": {
+    "avatar": {
+      "url": "https://avatars.dicebear.com/api/bottts/GSFeed.png", // Set the bot avatar
+      "update": false // There is a rate limit, only set update to true if url is changed
+    },
     "token": "", // Discord bot access token
     "prefix": "!", // Command prefix (ex: !start, @start, .start etc)
+    // List of channel IDs to accept commands from
+    "channels": [
+      "0000000000000000000"
+    ],
+    // Access levels for different bot commands (!start, !stop, etc.)
     "access": [
       {
         "id": "252515070058299393", // User Discord ID
@@ -9,19 +18,19 @@
       }
     ]
   },
-  // XXX: Reimplement from previous bot version to support multiple server instances
+  // Log settings for multiple Geneshift servers
   "logs": [
     {
-      "automatic": true, // Parse log files once bot is started
-      "id": "server1", // Unique ID for this server log - !start server1 (start log output?)
+      "onstart": true, // Parse log files once bot is started
+      "id": "GS1", // Unique ID for this server log - !start GS1 (start log output?)
       "file": "/path/to/Geneshift01/data/log.txt", // Path to Geneshift log
-      "channel": "0000000000000000000" // Channel output ID (required for `automatic`)
+      "channel": "0000000000000000000" // Discord channel output ID (required for `onstart`)
     },
     {
-      "automatic": false, // Parse log files once bot is started
-      "id": "server2", // Unique ID for this server log - !stop server2 (stop log output?)
+      "onstart": false, // Parse log files once bot is started
+      "id": "GS2", // Unique ID for this server log - !stop GS2 (stop log output?)
       "file": "/path/to/Geneshift02/data/log.txt", // Path to Geneshift log
-      "channel": "0000000000000000000" // Channel output ID (optional)
+      "channel": "0000000000000000000" // Discord channel output ID (required for `onstart`)
     }
   ]
 }
