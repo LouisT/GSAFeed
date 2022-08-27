@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -91,11 +92,23 @@ func LogParser(session *discordgo.Session, settings Logs) {
 	}); err == nil {
 		Tails[settings.ID] = tailer // Append for Cleanup()
 		go func() {
+			var last string
 			for line := range tailer.Lines {
-				for rgx, compiler := range Parsers {
-					if rgx.MatchString(line.Text) {
-						if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, compiler(line.Text, rgx))); err != nil {
-							log.Printf("[%s] Message error: %+v", settings.Channel, err)
+				if MetaParsers["Reset"].MatchString(line.Text) {
+					Bots[settings.ID] = append([]string{}, DefaultBots...)
+				} else if MetaParsers["AddBot"].MatchString(line.Text) {
+					if match := MetaParsers["AddBot"].FindStringSubmatch(line.Text); len(match) == 2 {
+						Bots[settings.ID] = append(Bots[settings.ID], match[1])
+					}
+				} else {
+					for rgx, compiler := range Parsers {
+						if last != line.Text && rgx.MatchString(line.Text) {
+							if output, ok := compiler(line.Text, rgx, Bots[settings.ID]); ok && output != last {
+								if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
+									log.Printf("[%s] Message error: %+v", settings.Channel, err)
+								}
+								last = output
+							}
 						}
 					}
 				}
@@ -104,4 +117,46 @@ func LogParser(session *discordgo.Session, settings Logs) {
 	} else {
 		log.Println(err)
 	}
+}
+
+// GeneshiftSettings attempts to read head of log file, getting Geneshift settings.
+func GeneshiftSettings(file string) (*Geneshift, error) {
+	settings := &Geneshift{}
+	settings.Bots = append([]string{}, DefaultBots...)
+
+	f, err := os.Open(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	line := 0
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line++
+		txt := scanner.Text()
+		if line == 1 && !strings.Contains(txt, "Start Loading Geneshift") {
+			return settings, fmt.Errorf("---!--- invalid start of log file, no settings found")
+		} else if MetaParsers["AddBot"].MatchString(txt) {
+			if match := MetaParsers["AddBot"].FindStringSubmatch(txt); len(match) == 2 {
+				settings.Bots = append(settings.Bots, match[1])
+			}
+		} else if strings.Contains(txt, "Finish Loading Sequence") {
+			return settings, nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Println(err)
+	}
+
+	return settings, nil
+}
+
+// ContainsI checks if a string exists in a string slice
+func ContainsI(slice []string, key string) bool {
+	for _, value := range slice {
+		if strings.EqualFold(value, key) {
+			return true
+		}
+	}
+	return false
 }

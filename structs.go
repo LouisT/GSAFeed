@@ -24,3 +24,7 @@ type Logs struct {
 	Position string `json:"position,omitempty"`
 	Channel  string `json:"channel,omitempty"`
 }
+
+type Geneshift struct {
+	Bots []string
+}

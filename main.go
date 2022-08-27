@@ -23,6 +23,10 @@ var (
 	Allowed    map[string]bool       = make(map[string]bool)
 	Tails      map[string]*tail.Tail = make(map[string]*tail.Tail)
 	logger                           = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	// List of bots for specific server IDs
+	DefaultBots = []string{ "a civilian" }
+	Bots map[string][]string = make(map[string][]string)
 )
 
 func main() {
@@ -97,6 +101,11 @@ func main() {
 	defer dg.Close()
 
 	for _, settings := range config.Logs {
+		if GSSettings, err := GeneshiftSettings(settings.File); err == nil {
+			Bots[settings.ID] = GSSettings.Bots
+		} else {
+			log.Println(err)
+		}
 		if settings.OnStart {
 			go LogParser(dg, settings)
 		}
