@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hjson/hjson-go"
@@ -72,51 +73,57 @@ func GetCommand(input string) (string, string, string) {
 
 // LogParser manages the log parsing for Geneshift logs
 func LogParser(session *discordgo.Session, settings Logs) {
-	if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("***=== Starting game stream! (ID: %s) ===***", settings.ID)); err != nil {
-		log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
+	if _, ok := Onces[settings.ID]; !ok {
+		Onces[settings.ID] = &sync.Once{}
 	}
-	Whence := 2
-	switch settings.Position {
-	case "start":
-		Whence = io.SeekStart
-	default:
-		Whence = io.SeekEnd
-	}
-	if tailer, err := tail.TailFile(settings.File, tail.Config{
-		Location: &tail.SeekInfo{
-			Offset: 0,
-			Whence: Whence,
-		},
-		Follow: true,
-		ReOpen: true, // If the Geneshift server restarts, keep reading the file after trunc.
-	}); err == nil {
-		Tails[settings.ID] = tailer // Append for Cleanup()
-		go func() {
-			var last string
-			for line := range tailer.Lines {
-				if MetaParsers["Reset"].MatchString(line.Text) {
-					Bots[settings.ID] = append([]string{}, DefaultBots...)
-				} else if MetaParsers["AddBot"].MatchString(line.Text) {
-					if match := MetaParsers["AddBot"].FindStringSubmatch(line.Text); len(match) == 2 {
-						Bots[settings.ID] = append(Bots[settings.ID], match[1])
-					}
-				} else {
-					for rgx, compiler := range Parsers {
-						if last != line.Text && rgx.MatchString(line.Text) {
-							if output, ok := compiler(line.Text, rgx, Bots[settings.ID]); ok && output != last {
-								if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
-									log.Printf("[%s] Message error: %+v", settings.Channel, err)
+
+	Onces[settings.ID].Do(func() {
+		if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("***=== Starting game feed! (ID: %s) ===***", settings.ID)); err != nil {
+			log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
+		}
+		Whence := 2
+		switch settings.Position {
+		case "start":
+			Whence = io.SeekStart
+		default:
+			Whence = io.SeekEnd
+		}
+		if tailer, err := tail.TailFile(settings.File, tail.Config{
+			Location: &tail.SeekInfo{
+				Offset: 0,
+				Whence: Whence,
+			},
+			Follow: true,
+			ReOpen: true, // If the Geneshift server restarts, keep reading the file after trunc.
+		}); err == nil {
+			Tails[settings.ID] = tailer // Append for Cleanup()
+			go func() {
+				var last string
+				for line := range tailer.Lines {
+					if MetaParsers["Reset"].MatchString(line.Text) {
+						Bots[settings.ID] = append([]string{}, DefaultBots...)
+					} else if MetaParsers["AddBot"].MatchString(line.Text) {
+						if match := MetaParsers["AddBot"].FindStringSubmatch(line.Text); len(match) == 2 {
+							Bots[settings.ID] = append(Bots[settings.ID], match[1])
+						}
+					} else {
+						for rgx, compiler := range Parsers {
+							if last != line.Text && rgx.MatchString(line.Text) {
+								if output, ok := compiler(line.Text, rgx, Bots[settings.ID]); ok && output != last {
+									if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
+										log.Printf("[%s] Message error: %+v", settings.Channel, err)
+									}
+									last = output
 								}
-								last = output
 							}
 						}
 					}
 				}
-			}
-		}()
-	} else {
-		log.Println(err)
-	}
+			}()
+		} else {
+			log.Println(err)
+		}
+	})
 }
 
 // GeneshiftSettings attempts to read head of log file, getting Geneshift settings.
