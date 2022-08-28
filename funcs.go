@@ -134,7 +134,7 @@ func GeneshiftSettings(opts Logs) (*Geneshift, error) {
 	settings.Killfeed = opts.Killfeed
 	f, err := os.Open(opts.File)
 	if err != nil {
-		log.Fatal(err)
+		return settings, err
 	}
 	defer f.Close()
 	line := 0
