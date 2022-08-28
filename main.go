@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -18,6 +19,13 @@ import (
 )
 
 var (
+	// Project is set at compile time
+	Project = "GoDash"
+	// Version is set at compile time
+	Version = "0.0.0-beta.0"
+	// Revision is set at compile time, it is the git SHA-1 revision
+	Revision = "0000000"
+
 	configFile = ""
 	config     Config
 	Onces      map[string]*sync.Once = make(map[string]*sync.Once)
@@ -39,6 +47,8 @@ func cleanup() {
 }
 
 func main() {
+    logger.Printf("%s v%s+%s - %s\n", Project, Version, Revision, runtime.Version())
+
 	defer cleanup()
 	flag.StringVar(&configFile, "config", "./config.hjson", "path to config file")
 	flag.Parse()
@@ -92,7 +102,7 @@ func main() {
 		} else if HasAccess(m.Author.ID, 1) {
 			if IsCommand(m.Content, "shutdown") {
 				for _, channel := range config.Discord.Channels {
-					if _, err := s.ChannelMessageSend(channel, fmt.Sprintf("***=== Shutdown triggered by %s! (%s) ===***", m.Author.Username, m.Author.ID)); err != nil {
+					if _, err := s.ChannelMessageSend(channel, fmt.Sprintf("***>>> Shutdown triggered by %s! (%s)***", m.Author.Username, m.Author.ID)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
 				}
@@ -106,7 +116,7 @@ func main() {
 					tailer.Cleanup()
 					delete(Onces, id)
                     delete(Tails, id)
-					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***=== Stopping game feed! (ID: %s) ===***", id)); err != nil {
+					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
 				}
@@ -118,7 +128,7 @@ func main() {
 						tailer.Cleanup()
 						delete(Onces, id)
                         delete(Tails, id)
-						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***=== Stopping game feed! (ID: %s) ===***", id)); err != nil {
+						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
 					}
@@ -162,7 +172,7 @@ func main() {
 	}
 
 	for _, channel := range config.Discord.Channels {
-		if _, err := dg.ChannelMessageSend(channel, fmt.Sprintf("***=== GSFeed is now online! (Server IDs: %s) ===***", strings.Join(IDs, ", "))); err != nil {
+		if _, err := dg.ChannelMessageSend(channel, fmt.Sprintf("***>>> %s v%s+%s is now online! (Server IDs: %s)***", Project, Version, Revision, strings.Join(IDs, ", "))); err != nil {
 			log.Printf("[%s] Message error: %+v", channel, err)
 		}
 	}

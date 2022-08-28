@@ -78,7 +78,7 @@ func LogParser(session *discordgo.Session, settings Logs) {
 	}
 
 	Onces[settings.ID].Do(func() {
-		if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("***=== Starting game feed! (ID: %s) ===***", settings.ID)); err != nil {
+		if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("***>>> Starting game feed! (ID: %s)***", settings.ID)); err != nil {
 			log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
 		}
 		Whence := 2

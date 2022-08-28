@@ -1,4 +1,4 @@
-module tailbot
+module github.com/LouisT/GSFeed
 
 go 1.19
 

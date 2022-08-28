@@ -1,7 +1,8 @@
+// Copy to config.hjson and/or config.dev.hjson
 {
   "discord": {
     "avatar": {
-      "url": "https://avatars.dicebear.com/api/bottts/GSFeed.png", // Set the bot avatar
+      "url": "https://avatars.dicebear.com/api/bottts/GSFeed.dev.png", // Set the bot avatar
       "update": false // There is a rate limit, only set update to true if url is changed
     },
     "token": "", // Discord bot access token
