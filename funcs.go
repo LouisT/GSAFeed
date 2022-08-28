@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hjson/hjson-go"
@@ -78,7 +79,6 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 	if _, ok := Onces[settings.ID]; !ok {
 		Onces[settings.ID] = &sync.Once{}
 	}
-
 	Onces[settings.ID].Do(func() {
 		var GSSettings *Geneshift
 		var err error
@@ -152,6 +152,8 @@ func Preload(opts Logs) (*Geneshift, error) {
 	defer f.Close()
 	lines := 0
 	scanner := bufio.NewScanner(f)
+	start := time.Now()
+	logger.Printf(">>> [%s] Attempting to preload log! <<<", opts.ID)
 	for scanner.Scan() {
 		lines++
 		txt := scanner.Text()
@@ -199,7 +201,7 @@ func Preload(opts Logs) (*Geneshift, error) {
 		log.Println(err)
 	}
 	p := message.NewPrinter(language.English)
-	logger.Printf(">>> Preloaded %s lines! <<<", p.Sprintf("%d", lines))
+	logger.Printf(">>> [%s] Preloaded %s lines! (%s) <<<", opts.ID, p.Sprintf("%d", lines), time.Since(start))
 	settings.CanEmit = true
 
 	return settings, nil
