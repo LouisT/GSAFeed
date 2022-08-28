@@ -182,7 +182,7 @@ func PreloadLog(opts Logs) (*Geneshift, error) {
 				}
 			}
 		} else if MetaParsers["RemovePlayer"].MatchString(txt) {
-			if match := MetaParsers["AddPlayer"].FindStringSubmatch(txt); len(match) == 2 {
+			if match := MetaParsers["RemovePlayer"].FindStringSubmatch(txt); len(match) == 2 {
 				delete(settings.Players, match[1])
 			}
 		} else if MetaParsers["AddBot"].MatchString(txt) {
