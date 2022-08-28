@@ -153,7 +153,6 @@ func Preload(opts Logs) (*Geneshift, error) {
 	lines := 0
 	scanner := bufio.NewScanner(f)
 	start := time.Now()
-	logger.Printf(">>> [%s] Attempting to preload log! <<<", opts.ID)
 	for scanner.Scan() {
 		lines++
 		txt := scanner.Text()
