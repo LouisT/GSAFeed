@@ -14,6 +14,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/hjson/hjson-go"
 	"github.com/nxadm/tail"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 // load a config based on the configFile variable
@@ -80,7 +82,7 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 	Onces[settings.ID].Do(func() {
 		var GSSettings *Geneshift
 		var err error
-		if GSSettings, err = PreloadLog(settings); err != nil {
+		if GSSettings, err = Preload(settings); err != nil {
 			log.Println(err)
 		}
 		Servers[settings.ID] = GSSettings
@@ -137,7 +139,7 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 
 // PreloadLog attempts to read the log file as fast as possible,
 // prefilling bots and player data.
-func PreloadLog(opts Logs) (*Geneshift, error) {
+func Preload(opts Logs) (*Geneshift, error) {
 	settings := &Geneshift{
 		Players:  make(map[string]*Player),
 		Bots:     append([]string{}, DefaultBots...),
@@ -196,6 +198,8 @@ func PreloadLog(opts Logs) (*Geneshift, error) {
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
+	p := message.NewPrinter(language.English)
+	logger.Printf(">>> Preloaded %s lines! <<<", p.Sprintf("%d", lines))
 	settings.CanEmit = true
 
 	return settings, nil

@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.26.0
 	github.com/hjson/hjson-go v3.3.0+incompatible
 	github.com/nxadm/tail v1.4.8
+	golang.org/x/text v0.3.7
 )
 
 require (
