@@ -1,5 +1,6 @@
 package main
 
+// Config is the overall config file
 type Config struct {
 	Discord struct {
 		Avatar struct {
@@ -17,14 +18,19 @@ type Config struct {
 	Logs []Logs `json:"logs"`
 }
 
+// Logs are the log file settings
 type Logs struct {
 	OnStart  bool   `json:"onstart,omitempty"`
 	ID       string `json:"id"`
 	File     string `json:"file"`
 	Position string `json:"position,omitempty"`
 	Channel  string `json:"channel,omitempty"`
+	Killfeed bool   `json:"killfeed,omitempty"`
 }
 
+// Geneshift is used to store server metadata
 type Geneshift struct {
-	Bots []string
+	Version  string
+	Bots     []string
+	Killfeed bool
 }

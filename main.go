@@ -35,8 +35,10 @@ var (
 	IDs                              = []string{}
 
 	// List of bots for specific server IDs
-	DefaultBots                     = []string{"a civilian"}
-	Bots        map[string][]string = make(map[string][]string)
+	DefaultBots = []string{"a civilian"}
+
+	// Geneshift server metadata
+	Servers map[string]*Geneshift = make(map[string]*Geneshift)
 )
 
 func cleanup() {
@@ -47,7 +49,7 @@ func cleanup() {
 }
 
 func main() {
-    logger.Printf("%s v%s+%s - %s\n", Project, Version, Revision, runtime.Version())
+	logger.Printf("%s v%s+%s - %s\n", Project, Version, Revision, runtime.Version())
 
 	defer cleanup()
 	flag.StringVar(&configFile, "config", "./config.hjson", "path to config file")
@@ -115,7 +117,7 @@ func main() {
 					tailer.Stop()
 					tailer.Cleanup()
 					delete(Onces, id)
-                    delete(Tails, id)
+					delete(Tails, id)
 					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
@@ -127,7 +129,7 @@ func main() {
 						tailer.Stop()
 						tailer.Cleanup()
 						delete(Onces, id)
-                        delete(Tails, id)
+						delete(Tails, id)
 						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
@@ -148,6 +150,19 @@ func main() {
 						go LogParser(dg, settings)
 					}
 				}
+			} else if IsCommand(m.Content, "killfeed") {
+				_, _, args := GetCommand(m.Content)
+				for id, settings := range Servers {
+					if strings.EqualFold(id, args) {
+						settings.Killfeed = !settings.Killfeed
+						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Killfeed for %s is now %s***", id, map[bool]string{
+							true:  "ON",
+							false: "OFF",
+						}[settings.Killfeed])); err != nil {
+							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
+						}
+					}
+				}
 			}
 		}
 	})
@@ -161,11 +176,11 @@ func main() {
 
 	for _, settings := range config.Logs {
 		IDs = append(IDs, settings.ID)
-		if GSSettings, err := GeneshiftSettings(settings.File); err == nil {
-			Bots[settings.ID] = GSSettings.Bots
-		} else {
+		var GSSettings *Geneshift
+		if GSSettings, err = GeneshiftSettings(settings); err != nil {
 			log.Println(err)
 		}
+		Servers[settings.ID] = GSSettings
 		if settings.OnStart {
 			go LogParser(dg, settings)
 		}

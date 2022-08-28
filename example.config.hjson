@@ -23,15 +23,17 @@
   "logs": [
     {
       "onstart": true, // Parse log files once bot is started
-      "id": "GS1", // Unique ID for this server log - !start GS1 (start log output?)
+      "id": "GS1", // Unique ID for this server log - !start GS1 (start log output)
       "file": "/path/to/Geneshift01/data/log.txt", // Path to Geneshift log
-      "channel": "0000000000000000000" // Discord channel output ID (required for `onstart`)
+      "channel": "0000000000000000000", // Discord channel output ID (required for `onstart`)
+      "killfeed": true // Enable the killfeed (off by default)
     },
     {
       "onstart": false, // Parse log files once bot is started
-      "id": "GS2", // Unique ID for this server log - !stop GS2 (stop log output?)
+      "id": "GS2", // Unique ID for this server log - !stop GS2 (stop log output)
       "file": "/path/to/Geneshift02/data/log.txt", // Path to Geneshift log
-      "channel": "0000000000000000000" // Discord channel output ID (required for `onstart`)
+      "channel": "0000000000000000000", // Discord channel output ID (required for `onstart`)
+      "killfeed": false // Enable the killfeed (off by default)
     }
   ]
 }

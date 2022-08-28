@@ -78,7 +78,8 @@ func LogParser(session *discordgo.Session, settings Logs) {
 	}
 
 	Onces[settings.ID].Do(func() {
-		if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("***>>> Starting game feed! (ID: %s)***", settings.ID)); err != nil {
+		msg := fmt.Sprintf("***>>> Starting game feed for Geneshift %s (ID: %s)***", Servers[settings.ID].Version, settings.ID)
+		if _, err := session.ChannelMessageSend(settings.Channel, normalize(msg)); err != nil {
 			log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
 		}
 		Whence := 2
@@ -101,15 +102,15 @@ func LogParser(session *discordgo.Session, settings Logs) {
 				var last string
 				for line := range tailer.Lines {
 					if MetaParsers["Reset"].MatchString(line.Text) {
-						Bots[settings.ID] = append([]string{}, DefaultBots...)
+						Servers[settings.ID].Bots = append([]string{}, DefaultBots...)
 					} else if MetaParsers["AddBot"].MatchString(line.Text) {
 						if match := MetaParsers["AddBot"].FindStringSubmatch(line.Text); len(match) == 2 {
-							Bots[settings.ID] = append(Bots[settings.ID], match[1])
+							Servers[settings.ID].Bots = append(Servers[settings.ID].Bots, match[1])
 						}
 					} else {
 						for rgx, compiler := range Parsers {
 							if last != line.Text && rgx.MatchString(line.Text) {
-								if output, ok := compiler(line.Text, rgx, Bots[settings.ID]); ok && output != last {
+								if output, ok := compiler(line.Text, rgx, Servers[settings.ID]); ok && output != last {
 									if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
 										log.Printf("[%s] Message error: %+v", settings.Channel, err)
 									}
@@ -127,11 +128,11 @@ func LogParser(session *discordgo.Session, settings Logs) {
 }
 
 // GeneshiftSettings attempts to read head of log file, getting Geneshift settings.
-func GeneshiftSettings(file string) (*Geneshift, error) {
+func GeneshiftSettings(opts Logs) (*Geneshift, error) {
 	settings := &Geneshift{}
 	settings.Bots = append([]string{}, DefaultBots...)
-
-	f, err := os.Open(file)
+	settings.Killfeed = opts.Killfeed
+	f, err := os.Open(opts.File)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,8 +142,14 @@ func GeneshiftSettings(file string) (*Geneshift, error) {
 	for scanner.Scan() {
 		line++
 		txt := scanner.Text()
-		if line == 1 && !strings.Contains(txt, "Start Loading Geneshift") {
-			return settings, fmt.Errorf("---!--- invalid start of log file, no settings found")
+		if line == 1 {
+			if !MetaParsers["StartLine"].MatchString(txt) {
+				return settings, fmt.Errorf("---!--- invalid start of log file, no settings found")
+			} else {
+				if match := MetaParsers["StartLine"].FindStringSubmatch(txt); len(match) == 2 {
+					settings.Version = match[1]
+				}
+			}
 		} else if MetaParsers["AddBot"].MatchString(txt) {
 			if match := MetaParsers["AddBot"].FindStringSubmatch(txt); len(match) == 2 {
 				settings.Bots = append(settings.Bots, match[1])
@@ -166,4 +173,9 @@ func ContainsI(slice []string, key string) bool {
 		}
 	}
 	return false
+}
+
+// normalize removes any extra spaces or other characters (in the future)
+func normalize(str string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
 }
