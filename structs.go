@@ -20,6 +20,7 @@ type Config struct {
 
 // Logs are the log file settings
 type Logs struct {
+	Preload  bool   `json:"preload"`
 	OnStart  bool   `json:"onstart,omitempty"`
 	ID       string `json:"id"`
 	File     string `json:"file"`
@@ -30,7 +31,18 @@ type Logs struct {
 
 // Geneshift is used to store server metadata
 type Geneshift struct {
+	CanEmit  bool // If true, send channel messages
 	Version  string
+	Players  map[string]*Player
 	Bots     []string
 	Killfeed bool
+}
+
+// Track players
+type Player struct {
+	Name    string
+	SteamID string
+	Kills   int
+	Deaths  int
+	KD      float64
 }

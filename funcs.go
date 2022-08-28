@@ -71,13 +71,19 @@ func GetCommand(input string) (string, string, string) {
 	return split[0][:1], split[0][1:], ""
 }
 
-// LogParser manages the log parsing for Geneshift logs
-func LogParser(session *discordgo.Session, settings Logs) {
+// MessageParser manages the log parsing for Geneshift logs
+func MessageParser(session *discordgo.Session, settings Logs) {
 	if _, ok := Onces[settings.ID]; !ok {
 		Onces[settings.ID] = &sync.Once{}
 	}
 
 	Onces[settings.ID].Do(func() {
+		var GSSettings *Geneshift
+		var err error
+		if GSSettings, err = PreloadLog(settings); err != nil {
+			log.Println(err)
+		}
+		Servers[settings.ID] = GSSettings
 		msg := fmt.Sprintf("***>>> Starting game feed for Geneshift %s (ID: %s)***", Servers[settings.ID].Version, settings.ID)
 		if _, err := session.ChannelMessageSend(settings.Channel, normalize(msg)); err != nil {
 			log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
@@ -111,8 +117,10 @@ func LogParser(session *discordgo.Session, settings Logs) {
 						for rgx, compiler := range Parsers {
 							if last != line.Text && rgx.MatchString(line.Text) {
 								if output, ok := compiler(line.Text, rgx, Servers[settings.ID]); ok && output != last {
-									if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
-										log.Printf("[%s] Message error: %+v", settings.Channel, err)
+									if Servers[settings.ID].CanEmit {
+										if _, err := session.ChannelMessageSend(settings.Channel, fmt.Sprintf("[%s] %s", settings.ID, output)); err != nil {
+											log.Printf("[%s] Message error: %+v", settings.Channel, err)
+										}
 									}
 									last = output
 								}
@@ -127,22 +135,25 @@ func LogParser(session *discordgo.Session, settings Logs) {
 	})
 }
 
-// GeneshiftSettings attempts to read head of log file, getting Geneshift settings.
-func GeneshiftSettings(opts Logs) (*Geneshift, error) {
-	settings := &Geneshift{}
-	settings.Bots = append([]string{}, DefaultBots...)
-	settings.Killfeed = opts.Killfeed
+// PreloadLog attempts to read the log file as fast as possible,
+// prefilling bots and player data.
+func PreloadLog(opts Logs) (*Geneshift, error) {
+	settings := &Geneshift{
+		Players:  make(map[string]*Player),
+		Bots:     append([]string{}, DefaultBots...),
+		Killfeed: opts.Killfeed,
+	}
 	f, err := os.Open(opts.File)
 	if err != nil {
 		return settings, err
 	}
 	defer f.Close()
-	line := 0
+	lines := 0
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		line++
+		lines++
 		txt := scanner.Text()
-		if line == 1 {
+		if lines == 1 {
 			if !MetaParsers["StartLine"].MatchString(txt) {
 				return settings, fmt.Errorf("---!--- invalid start of log file, no settings found")
 			} else {
@@ -150,17 +161,42 @@ func GeneshiftSettings(opts Logs) (*Geneshift, error) {
 					settings.Version = match[1]
 				}
 			}
+		} else if MetaParsers["Reset"].MatchString(txt) {
+			settings.Bots = append([]string{}, DefaultBots...)
+		} else if MetaParsers["Kills"].MatchString(txt) {
+			if match := MetaParsers["Kills"].FindStringSubmatch(txt); len(match) == 4 {
+				if player, ok := settings.Players[match[1]]; ok {
+					player.Kills += 1
+					player.KD = divide(player.Kills, player.Deaths)
+				}
+				if player, ok := settings.Players[match[2]]; ok {
+					player.Deaths += 1
+					player.KD = divide(player.Kills, player.Deaths)
+				}
+			}
+		} else if MetaParsers["AddPlayer"].MatchString(txt) {
+			if match := MetaParsers["AddPlayer"].FindStringSubmatch(txt); len(match) == 3 {
+				settings.Players[match[1]] = &Player{ // Always overwrite player stats in case leave is not detected
+					Name:    match[1],
+					SteamID: match[2],
+				}
+			}
+		} else if MetaParsers["RemovePlayer"].MatchString(txt) {
+			if match := MetaParsers["AddPlayer"].FindStringSubmatch(txt); len(match) == 2 {
+				delete(settings.Players, match[1])
+			}
 		} else if MetaParsers["AddBot"].MatchString(txt) {
 			if match := MetaParsers["AddBot"].FindStringSubmatch(txt); len(match) == 2 {
 				settings.Bots = append(settings.Bots, match[1])
 			}
-		} else if strings.Contains(txt, "Finish Loading Sequence") {
+		} else if !opts.Preload && strings.Contains(txt, "Finish Loading Sequence") {
 			return settings, nil
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
+	settings.CanEmit = true
 
 	return settings, nil
 }
@@ -178,4 +214,14 @@ func ContainsI(slice []string, key string) bool {
 // normalize removes any extra spaces or other characters (in the future)
 func normalize(str string) string {
 	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
+}
+
+// Calculate KD with zero error catch
+func divide(numerator int, denominator int) (result float64) {
+	defer func() {
+		if r := recover(); r != nil {
+			result = float64(numerator)
+		}
+	}()
+	return float64(numerator / denominator)
 }

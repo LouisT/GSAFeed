@@ -118,6 +118,7 @@ func main() {
 					tailer.Cleanup()
 					delete(Onces, id)
 					delete(Tails, id)
+					delete(Servers, id)
 					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
@@ -130,6 +131,7 @@ func main() {
 						tailer.Cleanup()
 						delete(Onces, id)
 						delete(Tails, id)
+						delete(Servers, id)
 						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
@@ -138,16 +140,13 @@ func main() {
 			} else if IsCommand(m.Content, "startall") {
 				log.Printf("Warning: startall triggered by %s! (%s)", m.Author.Username, m.Author.ID)
 				for _, settings := range config.Logs {
-					settings.Position = "end" // Always start tail at end for manual feeds
-					go LogParser(dg, settings)
+					go MessageParser(dg, settings)
 				}
 			} else if IsCommand(m.Content, "start") {
 				_, _, args := GetCommand(m.Content)
 				for _, settings := range config.Logs {
 					if strings.EqualFold(settings.ID, args) {
-						settings.Position = "end"      // Always start tail at end for manual feeds
-						settings.Channel = m.ChannelID // XXX: Change the channel ID to the channel the command was issued in?
-						go LogParser(dg, settings)
+						go MessageParser(dg, settings)
 					}
 				}
 			} else if IsCommand(m.Content, "killfeed") {
@@ -176,13 +175,8 @@ func main() {
 
 	for _, settings := range config.Logs {
 		IDs = append(IDs, settings.ID)
-		var GSSettings *Geneshift
-		if GSSettings, err = GeneshiftSettings(settings); err != nil {
-			log.Println(err)
-		}
-		Servers[settings.ID] = GSSettings
 		if settings.OnStart {
-			go LogParser(dg, settings)
+			go MessageParser(dg, settings)
 		}
 	}
 
