@@ -20,15 +20,11 @@ var (
 		// Generic parsers
 		regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			server.Players[matches[1]] = &Player{
-				Name: matches[1],
-			}
+			server.Players[matches[1]] = &Player{Name: matches[1]}
 			return fmt.Sprintf(":arrow_right: **%s** has joined the server!", matches[1]), true
 		},
 		regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			server.Finished = false
-			server.RoundWins = make(map[int]string)
-			server.Bots = append([]string{}, DefaultBots...)
+			server.reset(false)
 			return "", false
 		},
 		regexp.MustCompile(`\(\d+\): Saving: (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
@@ -151,6 +147,7 @@ var (
 			for _, player := range server.Players {
 				player.reset()
 			}
+			server.reset(false)
 
 			return "", false
 		},

@@ -140,12 +140,8 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 // PreloadLog attempts to read the log file as fast as possible,
 // prefilling bots and player data.
 func Preload(opts Logs) (*Geneshift, error) {
-	server := &Geneshift{
-		RoundWins: make(map[int]string),
-		Players:   make(map[string]*Player),
-		Bots:      append([]string{}, DefaultBots...),
-		Killfeed:  opts.Killfeed,
-	}
+	server := NewGeneshift()
+	server.Killfeed = opts.Killfeed
 	f, err := os.Open(opts.File)
 	if err != nil {
 		return server, err

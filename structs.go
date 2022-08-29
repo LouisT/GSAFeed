@@ -40,6 +40,27 @@ type Geneshift struct {
 	Finished  bool
 }
 
+// NewGeneshift creates a server instance
+func NewGeneshift() *Geneshift {
+	return &Geneshift{
+		RoundWins: make(map[int]string),
+		Players:   make(map[string]*Player),
+		Bots:      append([]string{}, DefaultBots...),
+	}
+}
+
+// Reset Server metadata
+func (g *Geneshift) reset(players bool) *Geneshift {
+	g.Finished = false
+	g.RoundWins = make(map[int]string)
+	g.Bots = append([]string{}, DefaultBots...)
+	if players {
+		g.Players = make(map[string]*Player)
+	}
+
+	return g
+}
+
 // Track players
 type Player struct {
 	Name    string
