@@ -31,18 +31,29 @@ type Logs struct {
 
 // Geneshift is used to store server metadata
 type Geneshift struct {
-	CanEmit  bool // If true, send channel messages
-	Version  string
-	Players  map[string]*Player
-	Bots     []string
-	Killfeed bool
+	CanEmit   bool // If true, send channel messages
+	Version   string
+	Players   map[string]*Player
+	Bots      []string
+	RoundWins map[int]string
+	Killfeed  bool
+	Finished  bool
 }
 
 // Track players
 type Player struct {
 	Name    string
-	SteamID string
+	SteamID string // Not currently tracked?
 	Kills   int
 	Deaths  int
 	KD      float64
+}
+
+// Reset a player stats
+func (p *Player) reset() *Player {
+	p.Kills = 0
+	p.Deaths = 0
+	p.KD = 0
+
+	return p
 }

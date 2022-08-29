@@ -6,4 +6,5 @@ Parse [Geneshift](https://geneshift.net/) logs and send killfeed/joins/parts/sta
 2) A Makefile to make running the bot(s) easier.
 2) Implement Redis client in order to track round KDs and other relevant stats?
 3) ???
-4) Profit!
+4) Clean up existing code.
+5) Profit!

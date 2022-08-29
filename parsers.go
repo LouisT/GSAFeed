@@ -2,83 +2,167 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var (
 	// Game feed parsers
 	// XXX: Implement other game modes.
 	//      Make emojis configurable?
-	Parsers = map[*regexp.Regexp]func(string, *regexp.Regexp, *Geneshift) (string, bool){
+	Parsers = map[*regexp.Regexp]func(*discordgo.Session, Logs, string, *regexp.Regexp, *Geneshift) (string, bool){
 		// Generic parsers
-		regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			matches := r.FindStringSubmatch(s)
-			server.Players[matches[1]] = &Player{ // Always overwrite player stats in case leave is not detected
-				Name:    matches[1],
-				SteamID: matches[2],
+		regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			matches := r.FindStringSubmatch(str)
+			server.Players[matches[1]] = &Player{
+				Name: matches[1],
 			}
-			return fmt.Sprintf(":arrow_right: **%s** has joined the server!", r.FindStringSubmatch(s)[1]), true
+			return fmt.Sprintf(":arrow_right: **%s** has joined the server!", matches[1]), true
 		},
-		regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+		regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			server.Finished = false
+			server.RoundWins = make(map[int]string)
 			server.Bots = append([]string{}, DefaultBots...)
 			return "", false
 		},
-		regexp.MustCompile(`\(\d+\): Saving: (.+)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			matches := r.FindStringSubmatch(s)
+		regexp.MustCompile(`\(\d+\): Saving: (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			matches := r.FindStringSubmatch(str)
 			delete(server.Players, matches[1])
 			return fmt.Sprintf(":arrow_left: **%s** has left the server!", matches[1]), true
 		},
-		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			if !server.Killfeed {
-				return "", false
-			}
-			matches := r.FindStringSubmatch(s)
+		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			matches := r.FindStringSubmatch(str)
 			isbot1 := ContainsI(server.Bots, matches[1])
 			isbot2 := ContainsI(server.Bots, matches[2])
 			if isbot1 && isbot2 {
 				return "", false
 			}
+			if player, ok := server.Players[matches[1]]; ok {
+				player.Kills += 1
+				player.KD = KD(player)
+			}
+			if player, ok := server.Players[matches[2]]; ok {
+				player.Deaths += 1
+				player.KD = KD(player)
+			}
+			if !server.Killfeed {
+				return "", false
+			}
 			switch {
 			case isbot1:
-				if player, ok := server.Players[matches[2]]; ok {
-					player.Deaths += 1
-					player.KD = divide(player.Kills, player.Deaths)
-				}
 				matches[1] = fmt.Sprintf("[B] %s", matches[1])
 			case isbot2:
-				if player, ok := server.Players[matches[2]]; ok {
-					player.Kills += 1
-					player.KD = divide(player.Kills, player.Deaths)
-				}
 				matches[2] = fmt.Sprintf("[B] %s", matches[2])
 			}
 			return fmt.Sprintf(":skull_crossbones: **%s** has killed **%s** with a **%s**", matches[1], matches[2], matches[3]), true
 		},
 
 		// BR parsers
-		regexp.MustCompile(`\(\d+\): SERVER: (.+) wins round (\d+)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			matches := r.FindStringSubmatch(s)
-			if ContainsI(server.Bots, matches[1]) {
-				return fmt.Sprintf(":person_facepalming: This is a sad day... everyone lost to **[B] %s**, a bot, on round **%s**!", matches[1], matches[2]), true
+		regexp.MustCompile(`\(\d+\): SERVER: (.+) wins round (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			matches := r.FindStringSubmatch(str)
+			name, isbot := func(n string) (string, bool) { // Normalize player/bot name
+				for key := range server.Players {
+					if strings.EqualFold(n, key) {
+						return key, false
+					}
+				}
+				for _, key := range server.Bots {
+					if strings.EqualFold(n, key) {
+						return fmt.Sprintf("[B] %s", key), true
+					}
+				}
+				return n, false // Unknown user?
+			}(matches[1])
+			round, _ := strconv.Atoi(matches[2])
+			server.RoundWins[round] = name
+			if isbot {
+				return fmt.Sprintf(":person_facepalming: This is a sad day... everyone lost to **%s**, a bot, on round **%s**!", name, matches[2]), true
 			}
-			return fmt.Sprintf(":trophy: ***%s*** has won round **%s**!", matches[1], matches[2]), true
+			return fmt.Sprintf(":trophy: ***%s*** has won round **%s**!", name, matches[2]), true
 		},
-		regexp.MustCompile(`\(\d+\): SERVER: (.+) gets the winner winner duck dinner`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			matches := r.FindStringSubmatch(s)
-			if ContainsI(server.Bots, matches[1]) {
-				return fmt.Sprintf(":person_facepalming: Boooo! Everyone lost to **[B] %s**, a bot, on the ***FINAL*** round!", matches[1]), true
+
+		regexp.MustCompile(`\(\d+\): SERVER: (.+) gets the winner winner`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			if server.Finished {
+				return "", false
 			}
-			return fmt.Sprintf(":poultry_leg: Congratulations to ***%s***! They have won the ***FINAL*** round!", matches[1]), true
+			server.Finished = true
+			matches := r.FindStringSubmatch(str)
+			fields := []*discordgo.MessageEmbedField{}
+			keys := make([]string, 0, len(server.Players))
+			for k := range server.Players {
+				keys = append(keys, k)
+			}
+			sort.SliceStable(keys, func(i, j int) bool {
+				return server.Players[keys[i]].KD > server.Players[keys[j]].KD
+			})
+			if len(keys) >= 6 {
+				keys = keys[:6]
+			}
+			kds := []string{}
+			for _, k := range keys {
+				player := server.Players[k]
+				kds = append(kds, fmt.Sprintf("**%s** %d/%d (%0.3f)", player.Name, player.Kills, player.Deaths, player.KD))
+			}
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("Top ***%d*** players:", len(kds)),
+				Value:  strings.Join(kds, ":black_small_square: "),
+				Inline: false,
+			})
+
+			rounds := make([]int, 0, len(server.RoundWins))
+			for round := range server.RoundWins {
+				rounds = append(rounds, round)
+			}
+			sort.Ints(rounds)
+			for _, round := range rounds {
+				winner := server.RoundWins[round]
+				fields = append(fields, &discordgo.MessageEmbedField{
+					Name:   fmt.Sprintf("Round ***%d*** winner:", round),
+					Value:  winner,
+					Inline: true,
+				})
+			}
+
+			title := fmt.Sprintf(":poultry_leg: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
+			if ContainsI(server.Bots, matches[1]) {
+				title = fmt.Sprintf(":person_facepalming: A bot **[B] %s** has won the ***FINAL*** round!", matches[1])
+			}
+			if _, err := session.ChannelMessageSendEmbed(settings.Channel, &discordgo.MessageEmbed{
+				Author:    &discordgo.MessageEmbedAuthor{},
+				Color:     0x00ff00, // Green
+				Fields:    fields,
+				Timestamp: time.Now().Format(time.RFC3339),
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: "https://i.imgur.com/575ebif.gif",
+				},
+				Title: normalize(title),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: normalize(fmt.Sprintf("Geneshift %v", server.Version)),
+				},
+			}); err != nil {
+				log.Println(err)
+			}
+			for _, player := range server.Players {
+				player.reset()
+			}
+
+			return "", false
 		},
-		regexp.MustCompile(`\(\d+\): RestartBattleRound: : (\d+)`): func(s string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			return fmt.Sprintf(":exclamation: Everyone get ready, round **%s** is starting!", r.FindStringSubmatch(s)[1]), true
+		regexp.MustCompile(`\(\d+\): RestartBattleRound: : (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			return fmt.Sprintf(":exclamation: Everyone get ready, round **%s** is starting!", r.FindStringSubmatch(str)[1]), true
 		},
 	}
 
 	// List of parsers used to track/update server settings
 	MetaParsers = map[string]*regexp.Regexp{
-		"StartLine":    regexp.MustCompile(`\(\d+\): ========= Start Loading Geneshift (.[^\s]+)`),          // Get Geneshift server version
-		"Reset":        regexp.MustCompile(`\(\d+\): (Restarting Match|Queuing Restart Due to New Player)`), // Clear bot list?
+		"StartLine":    regexp.MustCompile(`\(\d+\): ========= Start Loading Geneshift (.[^\s]+)`),                           // Get Geneshift server version
+		"Reset":        regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`), // Clear bot list?
 		"AddPlayer":    regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`),
 		"RemovePlayer": regexp.MustCompile(`\(\d+\): Saving: (.+)`),
 		"AddBot":       regexp.MustCompile(`\(\d+\): Adding Bot: (.+) with target`),
