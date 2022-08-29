@@ -147,7 +147,6 @@ var (
 			for _, player := range server.Players {
 				player.reset()
 			}
-			server.reset(false)
 
 			return "", false
 		},
