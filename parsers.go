@@ -50,10 +50,10 @@ var (
 			if !server.Killfeed {
 				return "", false
 			}
-			switch {
-			case isbot1:
+			if isbot1 {
 				matches[1] = fmt.Sprintf("[B] %s", matches[1])
-			case isbot2:
+			}
+			if isbot2 {
 				matches[2] = fmt.Sprintf("[B] %s", matches[2])
 			}
 			return fmt.Sprintf(":skull_crossbones: **%s** has killed **%s** with a **%s**", matches[1], matches[2], matches[3]), true
@@ -82,7 +82,6 @@ var (
 			}
 			return fmt.Sprintf(":trophy: ***%s*** has won round **%s**!", name, matches[2]), true
 		},
-
 		regexp.MustCompile(`\(\d+\): SERVER: (.+) gets the winner winner`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			if server.Finished {
 				return "", false
@@ -124,7 +123,6 @@ var (
 					Inline: true,
 				})
 			}
-
 			title := fmt.Sprintf(":poultry_leg: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
 			if ContainsI(server.Bots, matches[1]) {
 				title = fmt.Sprintf(":person_facepalming: A bot, **[B] %s**, has won the ***FINAL*** round!", matches[1])
