@@ -23,6 +23,12 @@ var (
 			server.Players[matches[1]] = &Player{Name: matches[1]}
 			return fmt.Sprintf(":arrow_right: **%s** has joined the server!", matches[1]), true
 		},
+		regexp.MustCompile(`(?i)\(\d+\): Sending Round Over`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
+			if server.Finished {
+				server.reset(false)
+			}
+			return "", false
+		},
 		regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			server.reset(false)
 			return "", false
@@ -78,9 +84,9 @@ var (
 			round, _ := strconv.Atoi(matches[2])
 			server.RoundWins[round] = name
 			if isbot {
-				return fmt.Sprintf(":person_facepalming: This is a sad day... everyone lost to **%s**, a bot, on round **%s**!", name, matches[2]), true
+				return fmt.Sprintf(":robot: **%s**, a bot, has won round **%s**!", name, matches[2]), true
 			}
-			return fmt.Sprintf(":trophy: ***%s*** has won round **%s**!", name, matches[2]), true
+			return fmt.Sprintf(":adult: ***%s*** has won round **%s**!", name, matches[2]), true
 		},
 		regexp.MustCompile(`\(\d+\): SERVER: (.+) gets the winner winner`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			if server.Finished {
@@ -123,7 +129,7 @@ var (
 					Inline: true,
 				})
 			}
-			title := fmt.Sprintf(":poultry_leg: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
+			title := fmt.Sprintf(":tophy: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
 			if ContainsI(server.Bots, matches[1]) {
 				title = fmt.Sprintf(":person_facepalming: A bot, **[B] %s**, has won the ***FINAL*** round!", matches[1])
 			}
