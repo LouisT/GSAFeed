@@ -117,7 +117,9 @@ func main() {
 					if _, err := s.ChannelMessageSend(m.ChannelID, msg); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
-					return
+					if (!all) {
+						return
+					}
 				}
 			}
 		} else if HasAccess(m.Author.ID, 1) {
