@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // Config is the overall config file
 type Config struct {
 	Discord struct {
@@ -68,13 +70,25 @@ type Player struct {
 	Kills   int
 	Deaths  int
 	KD      float64
+	timer   *time.Timer
 }
 
 // Reset a player stats
-func (p *Player) reset() *Player {
+func (p *Player) Reset() *Player {
+	p.timer.Stop()
 	p.Kills = 0
 	p.Deaths = 0
 	p.KD = 0
+
+	return p
+}
+
+// selfdestruct removes a player from the list in 5 minutes
+// if they don't rejoin the server after a match
+func (p *Player) selfdestruct(list map[string]*Player) *Player {
+	p.timer = time.AfterFunc(time.Minute*5, func() {
+		delete(list, p.Name)
+	})
 
 	return p
 }

@@ -20,8 +20,17 @@ var (
 		// Generic parsers
 		regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			server.Players[matches[1]] = &Player{Name: matches[1]}
-			return fmt.Sprintf(":arrow_right: **%s** has joined the server!", matches[1]), true
+			player, exists := server.Players[matches[1]]
+			if exists {
+				player.Reset()
+			} else {
+				server.Players[matches[1]] = &Player{Name: matches[1]}
+			}
+			prefix := ""
+			if exists { // If player already existed, skip the join message
+				prefix = "re"
+			}
+			return fmt.Sprintf(":arrow_right: **%s** has %sjoined the server!", matches[1], prefix), true
 		},
 		regexp.MustCompile(`(?i)\(\d+\): Sending Round Over`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			if server.Finished {
@@ -115,7 +124,6 @@ var (
 				Value:  strings.Join(kds, ":black_small_square: "),
 				Inline: false,
 			})
-
 			rounds := make([]int, 0, len(server.RoundWins))
 			for round := range server.RoundWins {
 				rounds = append(rounds, round)
@@ -149,9 +157,8 @@ var (
 				log.Println(err)
 			}
 			for _, player := range server.Players {
-				player.reset()
+				player.selfdestruct(server.Players)
 			}
-
 			return "", false
 		},
 		regexp.MustCompile(`\(\d+\): RestartBattleRound: : (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {

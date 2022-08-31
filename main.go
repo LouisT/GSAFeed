@@ -20,7 +20,7 @@ import (
 
 var (
 	// Project is set at compile time
-	Project = "GoDash"
+	Project = "GSFeed"
 	// Version is set at compile time
 	Version = "0.0.0-beta.0"
 	// Revision is set at compile time, it is the git SHA-1 revision
