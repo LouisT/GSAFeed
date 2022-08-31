@@ -101,6 +101,25 @@ func main() {
 			if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("[%s] %s / ChannelID: %s, AuthorID: %s", cmd, args, m.ChannelID, m.Author.ID)); err != nil {
 				log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 			}
+		} else if IsCommand(m.Content, "(all)?players") {
+			_, cmd, args := GetCommand(m.Content)
+			all := (cmd == "allplayers" && HasAccess(m.Author.ID, 1))
+			for id, server := range Servers {
+				if all || strings.EqualFold(id, args) {
+					output := []string{}
+					for _, player := range server.Players {
+						output = append(output, fmt.Sprintf("**%s** (**%d**/**%d**)", player.Name, player.Kills, player.Deaths))
+					}
+					msg := fmt.Sprintf("[%s] :wrestling: No active players!", id)
+					if len(output) >= 1 {
+						msg = fmt.Sprintf("[%s] :wrestling: %d players: %v", id, len(output), strings.Join(output, " :black_small_square: "))
+					}
+					if _, err := s.ChannelMessageSend(m.ChannelID, msg); err != nil {
+						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
+					}
+					return
+				}
+			}
 		} else if HasAccess(m.Author.ID, 1) {
 			if IsCommand(m.Content, "shutdown") {
 				for _, channel := range config.Discord.Channels {

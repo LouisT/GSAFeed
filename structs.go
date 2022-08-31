@@ -75,7 +75,9 @@ type Player struct {
 
 // Reset a player stats
 func (p *Player) Reset() *Player {
-	p.timer.Stop()
+	if p.timer != nil {
+		p.timer.Stop()
+	}
 	p.Kills = 0
 	p.Deaths = 0
 	p.KD = 0
