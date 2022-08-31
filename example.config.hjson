@@ -2,7 +2,8 @@
 {
   "discord": {
     "avatar": {
-      "url": "https://avatars.dicebear.com/api/bottts/GSFeed.dev.png", // Set the bot avatar
+      "file": "./assets/avatar.png", // Set the bot avatar from a file
+      // "url": "https://i.imgur.com/Tpr0nO9.png", // Set the bot avatar from a url
       "update": false // There is a rate limit, only set update to true if url is changed
     },
     "token": "", // Discord bot access token

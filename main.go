@@ -72,19 +72,26 @@ func main() {
 	}
 
 	// Set the bot avatar
-	if config.Discord.Avatar.Update && len(config.Discord.Avatar.URL) > 1 {
+	if config.Discord.Avatar.Update {
 		logger.Println("Updating avatar...")
 		go func() {
-			resp, err := http.Get(config.Discord.Avatar.URL)
-			if err != nil {
-				log.Println("Error retrieving the file, ", err)
-				return
-			}
-			defer resp.Body.Close()
-			img, err := io.ReadAll(resp.Body)
-			if err != nil {
-				log.Println("Error reading the response, ", err)
-				return
+			var img []byte
+			if len(config.Discord.Avatar.URL) > 1 {
+				resp, err := http.Get(config.Discord.Avatar.URL)
+				if err != nil {
+					log.Println("Error retrieving the file, ", err)
+					return
+				}
+				defer resp.Body.Close()
+				if img, err = io.ReadAll(resp.Body); err != nil {
+					log.Println("Error reading the response, ", err)
+					return
+				}
+			} else if len(config.Discord.Avatar.File) > 1 {
+				if img, err = os.ReadFile(config.Discord.Avatar.File); err != nil {
+					log.Println("Error retrieving the file, ", err)
+					return
+				}
 			}
 			if _, err = dg.UserUpdate("", fmt.Sprintf("data:%s;base64,%s", http.DetectContentType(img), base64.StdEncoding.EncodeToString(img))); err != nil {
 				log.Println(err)
@@ -117,7 +124,7 @@ func main() {
 					if _, err := s.ChannelMessageSend(m.ChannelID, msg); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 					}
-					if (!all) {
+					if !all {
 						return
 					}
 				}

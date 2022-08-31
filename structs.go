@@ -6,6 +6,7 @@ import "time"
 type Config struct {
 	Discord struct {
 		Avatar struct {
+			File   string `json:"file"`
 			URL    string `json:"url"`
 			Update bool   `json:"update"`
 		} `json:"avatar"`
