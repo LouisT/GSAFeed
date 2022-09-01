@@ -139,22 +139,14 @@ func main() {
 				logger.Printf("Shutdown triggered by %s! (%s)", m.Author.Username, m.Author.ID)
 				cleanup()
 				os.Exit(0)
-			} else if IsCommand(m.Content, "stopall") {
-				log.Printf("Warning: stopall triggered by %s! (%s)", m.Author.Username, m.Author.ID)
-				for id, tailer := range Tails {
-					tailer.Stop()
-					tailer.Cleanup()
-					delete(Onces, id)
-					delete(Tails, id)
-					delete(Servers, id)
-					if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Stopping game feed! (ID: %s)***", id)); err != nil {
-						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
-					}
+			} else if IsCommand(m.Content, "stop(all)?") {
+				_, cmd, args := GetCommand(m.Content)
+				all := (cmd == "stopall")
+				if all {
+					log.Printf("Warning: stopall triggered by %s! (%s)", m.Author.Username, m.Author.ID)
 				}
-			} else if IsCommand(m.Content, "stop") {
-				_, _, args := GetCommand(m.Content)
 				for id, tailer := range Tails {
-					if strings.EqualFold(id, args) {
+					if all || strings.EqualFold(id, args) {
 						tailer.Stop()
 						tailer.Cleanup()
 						delete(Onces, id)
@@ -165,23 +157,28 @@ func main() {
 						}
 					}
 				}
-			} else if IsCommand(m.Content, "startall") {
-				log.Printf("Warning: startall triggered by %s! (%s)", m.Author.Username, m.Author.ID)
-				for _, settings := range config.Logs {
-					go MessageParser(dg, settings)
+			} else if IsCommand(m.Content, "start(all)?") {
+				_, cmd, args := GetCommand(m.Content)
+				all := (cmd == "startall")
+				if all {
+					log.Printf("Warning: startall triggered by %s! (%s)", m.Author.Username, m.Author.ID)
 				}
-			} else if IsCommand(m.Content, "start") {
-				_, _, args := GetCommand(m.Content)
 				for _, settings := range config.Logs {
-					if strings.EqualFold(settings.ID, args) {
+					if all || strings.EqualFold(settings.ID, args) {
 						go MessageParser(dg, settings)
 					}
 				}
-			} else if IsCommand(m.Content, "killfeed") {
-				_, _, args := GetCommand(m.Content)
+			} else if IsCommand(m.Content, "killfeed(all)?") {
+				_, cmd, args := GetCommand(m.Content)
+				all := (cmd == "killfeedall")
+				toggle := (args == "on")
 				for id, settings := range Servers {
-					if strings.EqualFold(id, args) {
-						settings.Killfeed = !settings.Killfeed
+					if all || strings.EqualFold(id, args) {
+						if all {
+							settings.Killfeed = toggle
+						} else {
+							settings.Killfeed = !settings.Killfeed
+						}
 						if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("***>>> Killfeed for %s is now %s***", id, map[bool]string{
 							true:  "ON",
 							false: "OFF",
