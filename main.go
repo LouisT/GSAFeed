@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"flag"
 	"fmt"
@@ -13,8 +15,10 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/chromedp/chromedp"
 	"github.com/nxadm/tail"
 )
 
@@ -130,7 +134,33 @@ func main() {
 				}
 			}
 		} else if HasAccess(m.Author.ID, 1) {
-			if IsCommand(m.Content, "shutdown") {
+			if IsCommand(m.Content, "servers") { // XXX: This is just experimental, probably won't keep it.
+				go func(channel string) {
+					allocCtx, _ := chromedp.NewExecAllocator(context.Background(), append(chromedp.DefaultExecAllocatorOptions[:],
+						chromedp.WindowSize(int(1024), int(1024)),
+					)...)
+					ctx, cancel := chromedp.NewContext(allocCtx)
+					defer cancel()
+					tctx, tcancel := context.WithTimeout(ctx, 20*time.Second)
+					defer tcancel()
+					buf := []byte{}
+					if err := chromedp.Run(tctx, chromedp.Tasks{
+						chromedp.Navigate("https://www.geneshift.net/servers.php"),
+						chromedp.WaitVisible("table.serverTable"),
+						chromedp.Screenshot("table.serverTable", &buf, chromedp.NodeVisible),
+					}); err != nil {
+						log.Printf("[%s] ChromeDP error: %+v", channel, err)
+					} else {
+						if _, err := s.ChannelMessageSend(m.ChannelID, ">>>***Here is a list of currently available servers:***"); err != nil {
+							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
+						}
+						_, err = s.ChannelFileSend(channel, "geneshift-servers.png", bytes.NewReader(buf))
+						if err != nil {
+							log.Printf("[%s] Message error: %+v", channel, err)
+						}
+					}
+				}(m.ChannelID)
+			} else if IsCommand(m.Content, "shutdown") {
 				for _, channel := range config.Discord.Channels {
 					if _, err := s.ChannelMessageSend(channel, fmt.Sprintf("***>>> Shutdown triggered by %s! (%s)***", m.Author.Username, m.Author.ID)); err != nil {
 						log.Printf("[%s] Message error: %+v", m.ChannelID, err)
