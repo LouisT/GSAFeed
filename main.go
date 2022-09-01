@@ -151,7 +151,7 @@ func main() {
 					}); err != nil {
 						log.Printf("[%s] ChromeDP error: %+v", channel, err)
 					} else {
-						if _, err := s.ChannelMessageSend(m.ChannelID, ">>>***Here is a list of currently available servers:***"); err != nil {
+						if _, err := s.ChannelMessageSend(m.ChannelID, "***>>>Here is a list of currently available servers:***"); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
 						_, err = s.ChannelFileSend(channel, "geneshift-servers.png", bytes.NewReader(buf))
