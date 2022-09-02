@@ -69,6 +69,8 @@ func main() {
 		log.Fatal("error creating Discord session,", err)
 		return
 	}
+	dg.Identify.Intents |= discordgo.IntentMessageContent
+	dg.Identify.Intents |= discordgo.IntentsGuildMessages
 
 	// Store "allowed" chnannels for command permissions
 	for _, channel := range config.Discord.Channels {
@@ -220,7 +222,6 @@ func main() {
 			}
 		}
 	})
-	dg.Identify.Intents = discordgo.IntentsGuildMessages
 
 	if err = dg.Open(); err != nil {
 		log.Fatal("error opening connection,", err)

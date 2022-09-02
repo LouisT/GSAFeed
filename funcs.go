@@ -55,7 +55,7 @@ func HasAccess(id string, level int64) bool {
 
 // IsCommand checks input string for prefix + command
 func IsCommand(input string, cmd string) bool {
-	return IsCommandPrefix(input, cmd, config.Discord.Prefixes)
+	return IsCommandPrefix(input, cmd, strings.Join(config.Discord.Prefixes, ""))
 }
 
 // IsCommandPrefix checks if a command has specific prefixes

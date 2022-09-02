@@ -7,7 +7,7 @@
       "update": false // There is a rate limit, only set update to true if url is changed
     },
     "token": "", // Discord bot access token
-    "prefix": "!", // Command prefix (ex: !start, @start, .start etc)
+    "prefixes": ["!", "."], // Command prefixes (ex: !start, @start, .start etc)
     // List of channel IDs to accept commands from
     "channels": [
       "0000000000000000000"

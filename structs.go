@@ -11,7 +11,7 @@ type Config struct {
 			Update bool   `json:"update"`
 		} `json:"avatar"`
 		Token    string   `json:"token"`
-		Prefixes string   `json:"prefixes"`
+		Prefixes []string `json:"prefixes"`
 		Channels []string `json:"channels"`
 		Access   []struct {
 			ID    string `json:"id"`
