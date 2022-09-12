@@ -137,7 +137,7 @@ var (
 					Inline: true,
 				})
 			}
-			title := fmt.Sprintf(":tophy: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
+			title := fmt.Sprintf(":trophy: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
 			if ContainsI(server.Bots, matches[1]) {
 				title = fmt.Sprintf(":person_facepalming: A bot, **[B] %s**, has won the ***FINAL*** round!", matches[1])
 			}

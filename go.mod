@@ -11,7 +11,7 @@ require (
 )
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20220901095120-1a01299a2163 // indirect
+	github.com/chromedp/cdproto v0.0.0-20220908234607-11c39c58d330 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
@@ -21,6 +21,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
