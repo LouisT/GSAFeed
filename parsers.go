@@ -49,27 +49,23 @@ var (
 		},
 		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			isbot1 := ContainsI(server.Bots, matches[1])
-			isbot2 := ContainsI(server.Bots, matches[2])
-			if isbot1 && isbot2 {
+			if ContainsI(server.Bots, matches[1]) && ContainsI(server.Bots, matches[2]) {
 				return "", false
 			}
 			if player, ok := server.Players[matches[1]]; ok {
 				player.Kills += 1
 				player.KD = KD(player)
+			} else {
+				matches[1] = fmt.Sprintf("[B] %s", matches[1])
 			}
 			if player, ok := server.Players[matches[2]]; ok {
 				player.Deaths += 1
 				player.KD = KD(player)
+			} else {
+				matches[2] = fmt.Sprintf("[B] %s", matches[2])
 			}
 			if !server.Killfeed {
 				return "", false
-			}
-			if isbot1 {
-				matches[1] = fmt.Sprintf("[B] %s", matches[1])
-			}
-			if isbot2 {
-				matches[2] = fmt.Sprintf("[B] %s", matches[2])
 			}
 			return fmt.Sprintf(":skull_crossbones: **%s** has killed **%s** with a **%s**", matches[1], matches[2], matches[3]), true
 		},
@@ -151,7 +147,7 @@ var (
 				},
 				Title: normalize(title),
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: normalize(fmt.Sprintf("Geneshift %v", server.Version)),
+					Text: normalize(fmt.Sprintf("%s - Geneshift %v", settings.ID, server.Version)),
 				},
 			}); err != nil {
 				log.Println(err)
