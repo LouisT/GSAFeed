@@ -12,8 +12,8 @@ export SERVERS
 export HOST=Foo_Bar
 
 # Firejail arguments
-export JAILARGS="" # Use default network settings
-# export JAILARGS="--dns=8.8.8.8 --net=eth0 --ip=127.0.0.1" # Set sandbox IP + DNS
+export JAILARGS="--dns=8.8.8.8" # Use default network settings (set DNS server)
+# export JAILARGS="--dns=8.8.8.8 --net=eth0 --ip=127.0.0.1" # Set sandbox IP + DNS server
 
 # Name of the jail for access with `firejail` cli
 #  firejail --shutdown=$JAIL
