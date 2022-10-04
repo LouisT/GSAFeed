@@ -20,15 +20,10 @@ var (
 		// Generic parsers
 		regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			player, exists := server.Players[matches[1]]
-			if exists {
-				player.Reset()
-			} else {
+			prefix := "re"
+			if _, exists := server.Players[matches[1]]; !exists {
 				server.Players[matches[1]] = &Player{Name: matches[1]}
-			}
-			prefix := ""
-			if exists { // If player already existed, skip the join message
-				prefix = "re"
+				prefix = ""
 			}
 			return fmt.Sprintf(":arrow_right: **%s** has %sjoined the server!", matches[1], prefix), true
 		},
@@ -44,7 +39,8 @@ var (
 		},
 		regexp.MustCompile(`\(\d+\): Saving: (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			delete(server.Players, matches[1])
+			// XXX: Keep tracking for top players in a match?
+			// delete(server.Players, matches[1])
 			return fmt.Sprintf(":arrow_left: **%s** has left the server!", matches[1]), true
 		},
 		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
@@ -107,8 +103,8 @@ var (
 			sort.SliceStable(keys, func(i, j int) bool {
 				return server.Players[keys[i]].KD > server.Players[keys[j]].KD
 			})
-			if len(keys) >= 6 {
-				keys = keys[:6]
+			if len(keys) >= 10 {
+				keys = keys[:10]
 			}
 			kds := []string{}
 			for _, k := range keys {
@@ -116,7 +112,7 @@ var (
 				kds = append(kds, fmt.Sprintf("**%s** %d/%d (%0.3f)", player.Name, player.Kills, player.Deaths, player.KD))
 			}
 			fields = append(fields, &discordgo.MessageEmbedField{
-				Name:   fmt.Sprintf("Top ***%d*** players:", len(kds)),
+				Name:   fmt.Sprintf("Top ***%d*** player%s:", len(kds), map[bool]string{true: "", false: "s"}[len(kds) == 1]),
 				Value:  strings.Join(kds, ":black_small_square: "),
 				Inline: false,
 			})
@@ -126,10 +122,9 @@ var (
 			}
 			sort.Ints(rounds)
 			for _, round := range rounds {
-				winner := server.RoundWins[round]
 				fields = append(fields, &discordgo.MessageEmbedField{
 					Name:   fmt.Sprintf("Round ***%d*** winner:", round),
-					Value:  winner,
+					Value:  server.RoundWins[round],
 					Inline: true,
 				})
 			}
@@ -158,7 +153,7 @@ var (
 			return "", false
 		},
 		regexp.MustCompile(`\(\d+\): RestartBattleRound: : (\d+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
-			return fmt.Sprintf(":exclamation: Everyone get ready, round **%s** is starting!", r.FindStringSubmatch(str)[1]), true
+			return fmt.Sprintf(":exclamation: Round **%s** is starting!", r.FindStringSubmatch(str)[1]), true
 		},
 	}
 
