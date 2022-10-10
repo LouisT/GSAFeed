@@ -39,8 +39,7 @@ var (
 		},
 		regexp.MustCompile(`\(\d+\): Saving: (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			// XXX: Keep tracking for top players in a match?
-			// delete(server.Players, matches[1])
+			delete(server.Players, matches[1])
 			return fmt.Sprintf(":arrow_left: **%s** has left the server!", matches[1]), true
 		},
 		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *Geneshift) (string, bool) {
