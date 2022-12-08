@@ -1,5 +1,5 @@
-# GSFeed
-Parse [Geneshift](https://geneshift.net/) logs and send killfeed/joins/parts/stats and other log data to Discord channels.
+# GSAFeed
+Parse [Gene Shift Auto](https://geneshiftauto.com/) logs and send killfeed/joins/parts/stats and other log data to Discord channels.
 
 #### TODO:
 1) Literally everything.

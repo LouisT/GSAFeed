@@ -24,7 +24,7 @@ import (
 
 var (
 	// Project is set at compile time
-	Project = "GSFeed"
+	Project = "GSAFeed"
 	// Version is set at compile time
 	Version = "0.0.0-beta.0"
 	// Revision is set at compile time, it is the git SHA-1 revision
@@ -147,7 +147,7 @@ func main() {
 					defer tcancel()
 					buf := []byte{}
 					if err := chromedp.Run(tctx, chromedp.Tasks{
-						chromedp.Navigate("https://www.geneshift.net/servers.php"),
+						chromedp.Navigate(config.Servers),
 						chromedp.WaitVisible("table.serverTable"),
 						chromedp.Screenshot("table.serverTable", &buf, chromedp.NodeVisible),
 					}); err != nil {

@@ -4,6 +4,7 @@ import "time"
 
 // Config is the overall config file
 type Config struct {
+	Servers string `json:"servers"`
 	Discord struct {
 		Avatar struct {
 			File   string `json:"file"`

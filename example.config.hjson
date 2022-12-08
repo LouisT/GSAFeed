@@ -1,5 +1,6 @@
 // Copy to config.hjson and/or config.dev.hjson
 {
+  "servers": "https://geneshiftauto.com/servers.php", # Link go the GSA servers list
   "discord": {
     "avatar": {
       "file": "./assets/avatar.png", // Set the bot avatar from a file
@@ -7,7 +8,10 @@
       "update": false // There is a rate limit, only set update to true if url is changed
     },
     "token": "", // Discord bot access token
-    "prefixes": ["!", "."], // Command prefixes (ex: !start, @start, .start etc)
+    "prefixes": [
+      "!",
+      "."
+    ], // Command prefixes (ex: !start, @start, .start etc)
     // List of channel IDs to accept commands from
     "channels": [
       "0000000000000000000"

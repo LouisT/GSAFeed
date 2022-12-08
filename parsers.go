@@ -158,7 +158,7 @@ var (
 
 	// List of parsers used to track/update server settings
 	MetaParsers = map[string]*regexp.Regexp{
-		"StartLine":    regexp.MustCompile(`\(\d+\): ========= Start Loading Geneshift (.[^\s]+)`),                           // Get Geneshift server version
+		"StartLine":    regexp.MustCompile(`\(\d+\): ========= Start Loading (.[^\s]+)`),                           // Get Geneshift server version
 		"Reset":        regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`), // Clear bot list?
 		"AddPlayer":    regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`),
 		"RemovePlayer": regexp.MustCompile(`\(\d+\): Saving: (.+)`),
