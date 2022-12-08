@@ -24,21 +24,21 @@
       }
     ]
   },
-  // Log settings for multiple Geneshift servers
+  // Log settings for multiple Gene Shift Auto servers
   "logs": [
     {
       "preload": true, // Attempt to preload all the log data (players + bots, mostly)
       "onstart": true, // Parse log files once bot is started
-      "id": "GS1", // Unique ID for this server log - !start GS1 (start log output)
-      "file": "/path/to/Geneshift01/data/log.txt", // Path to Geneshift log
+      "id": "GSA1", // Unique ID for this server log - !start GS1 (start log output)
+      "file": "/path/to/01/data/log.txt", // Path to Gene Shift Auto log
       "channel": "0000000000000000000", // Discord channel/thread output ID (required for `onstart`)
       "killfeed": true // Enable the killfeed (off by default)
     },
     {
       "preload": true, // Attempt to preload all the log data (players + bots, mostly)
       "onstart": false, // Parse log files once bot is started
-      "id": "GS2", // Unique ID for this server log - !stop GS2 (stop log output)
-      "file": "/path/to/Geneshift02/data/log.txt", // Path to Geneshift log
+      "id": "GSA2", // Unique ID for this server log - !stop GS2 (stop log output)
+      "file": "/path/to/02/data/log.txt", // Path to Gene Shift Auto log
       "channel": "0000000000000000000", // Discord channel/thread output ID (required for `onstart`)
       "killfeed": false // Enable the killfeed (off by default)
     }

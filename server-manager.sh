@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Manage Geneshift servers using firejail.
+# Manage Gene Shift Auto servers using firejail.
 # This enables the ability to choose a specific IP address,
 # view process trees, see network and other stats via firejail.
 #
@@ -15,7 +15,7 @@ HOST="UNSET"
 JAILARGS=""
 # XXX: No need to change this unless managing
 #      multiple split servers for some reason?
-JAIL=Geneshift
+JAIL=GSA
 
 # Read/orverwrite settings?
 if [ -f server-config.sh ]; then
@@ -61,7 +61,7 @@ function JailerProcs() {
 
 function StartServers() {
     ValidateServers
-    log "Starting Geneshift servers; please wait..."
+    log "Starting Gene Shift Auto servers; please wait..."
     for KEY in "${!SERVERS[@]}"; do
         VAL=${SERVERS[$KEY]}
         if firejail --list | grep "name=$KEY" >/dev/null 2>&1; then
@@ -69,34 +69,34 @@ function StartServers() {
         else
             log "Starting $KEY ($VAL) in 5 seconds..." false
             sleep 5
-            (exec nohup firejail --private-cwd="$VAL" --name="$KEY" --noprofile "$JAILARGS" --join-or-start=$JAIL -- ./GeneshiftServer -h $HOST) </dev/null &>"$VAL/stdout.txt" &
+            (exec nohup firejail --private-cwd="$VAL" --name="$KEY" --noprofile "$JAILARGS" --join-or-start=$JAIL -- ./GeneShiftAutoServer -h $HOST) </dev/null &>"$VAL/stdout.txt" &
         fi
     done
 }
 
 function StopServers() {
-    log "Stopping Geneshift jail; please wait..."
+    log "Stopping Gene Shift Auto jail; please wait..."
     firejail --shutdown=$JAIL
 }
 
-function UpdateGeneshift() {
+function UpdateGSA() {
     ValidateServers
     for KEY in "${!SERVERS[@]}"; do
         if firejail --list | grep "name=$KEY" >/dev/null 2>&1; then
-            log "Please stop Geneshift servers first!"
+            log "Please stop Gene Shift Auto servers first!"
             JailerProcs
             exit 1
         fi
     done
-    log "Updating Geneshift binary; please wait..."
-    tmpfile=$(mktemp /tmp/Geneshift.XXXXXX)
+    log "Updating Gene Shift Auto binary; please wait..."
+    tmpfile=$(mktemp /tmp/GSA.XXXXXX)
     if ! wget "$UPDATE" -O "$tmpfile" -q --show-progress; then
         log "Failed to download $UPDATE to $tmpfile!" false
         exit 1
     fi
     for KEY in "${!SERVERS[@]}"; do
         VAL=${SERVERS[$KEY]}
-        OUT="$VAL/GeneshiftServer"
+        OUT="$VAL/GeneShiftAutoServer"
         log "Copying $tmpfile to $OUT..." false
         cp -rf "$tmpfile" "$OUT"
         chmod +x "$OUT"
@@ -127,7 +127,7 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 while [[ $# -gt 0 ]]; do
     case $1 in
     --update)
-        UpdateGeneshift
+        UpdateGSA
         shift
         ;;
     --start)

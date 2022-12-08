@@ -33,8 +33,8 @@ type Logs struct {
 	Killfeed bool   `json:"killfeed,omitempty"`
 }
 
-// Geneshift is used to store server metadata
-type Geneshift struct {
+// GSA is used to store server metadata
+type GSA struct {
 	CanEmit   bool // If true, send channel messages
 	Version   string
 	Players   map[string]*Player
@@ -44,9 +44,9 @@ type Geneshift struct {
 	Finished  bool
 }
 
-// NewGeneshift creates a server instance
-func NewGeneshift() *Geneshift {
-	return &Geneshift{
+// NewGSA creates a server instance
+func NewGSA() *GSA {
+	return &GSA{
 		RoundWins: make(map[int]string),
 		Players:   make(map[string]*Player),
 		Bots:      append([]string{}, DefaultBots...),
@@ -54,7 +54,7 @@ func NewGeneshift() *Geneshift {
 }
 
 // Reset Server metadata
-func (g *Geneshift) reset(players bool) *Geneshift {
+func (g *GSA) reset(players bool) *GSA {
 	g.Finished = false
 	g.RoundWins = make(map[int]string)
 	g.Bots = append([]string{}, DefaultBots...)

@@ -2,22 +2,21 @@
 
 # List of server IDs + paths
 declare -A SERVERS=(
-  [GS1]="/home/username/geneshift/Geneshift01"
-  [GS2]="/home/username/geneshift/Geneshift02"
-  [GST]="/home/username/geneshift/GSTesting"
+  [GS1]="/home/username/GSA/01"
+  [GS2]="/home/username/GSA/02"
+  [GST]="/home/username/GSA/GST"
 )
 export SERVERS
 
-# Geneshift username
-export HOST=Foo_Bar
+# GSA args
+export GSAARGS="-h Foo_Bar -v 3"
 
 # Firejail arguments
-export JAILARGS="--dns=8.8.8.8" # Use default network settings (set DNS server)
-# export JAILARGS="--dns=8.8.8.8 --net=eth0 --ip=127.0.0.1" # Set sandbox IP + DNS server
+export JAILARGS=""
 
 # Name of the jail for access with `firejail` cli
-#  firejail --shutdown=$JAIL
-export JAIL=Geneshift
+#  firejail --shutdown=JAIL
+export JAIL=GSA
 
-# Update URL (binary of GeneshiftServer)
-export UPDATE=https://geneshift.net/game/Geneshift/GeneshiftServer
+# Update URL (binary of GeneShiftAutoServer)
+export UPDATE=https://geneshiftauto.com/game/GeneShiftAuto/GeneShiftAutoServer

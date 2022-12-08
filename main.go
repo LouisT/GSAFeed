@@ -41,8 +41,8 @@ var (
 	// List of bots for specific server IDs
 	DefaultBots = []string{"a civilian"}
 
-	// Geneshift server metadata
-	Servers map[string]*Geneshift = make(map[string]*Geneshift)
+	// GSA server metadata
+	Servers map[string]*GSA = make(map[string]*GSA)
 )
 
 func cleanup() {
@@ -156,7 +156,7 @@ func main() {
 						if _, err := s.ChannelMessageSend(m.ChannelID, "***>>> Here is a list of currently available servers:***"); err != nil {
 							log.Printf("[%s] Message error: %+v", m.ChannelID, err)
 						}
-						_, err = s.ChannelFileSend(channel, "geneshift-servers.png", bytes.NewReader(buf))
+						_, err = s.ChannelFileSend(channel, "gsa-servers.png", bytes.NewReader(buf))
 						if err != nil {
 							log.Printf("[%s] Message error: %+v", channel, err)
 						}

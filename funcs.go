@@ -74,19 +74,19 @@ func GetCommand(input string) (string, string, string) {
 	return split[0][:1], split[0][1:], ""
 }
 
-// MessageParser manages the log parsing for Geneshift logs
+// MessageParser manages the log parsing for GSA logs
 func MessageParser(session *discordgo.Session, settings Logs) {
 	if _, ok := Onces[settings.ID]; !ok {
 		Onces[settings.ID] = &sync.Once{}
 	}
 	Onces[settings.ID].Do(func() {
-		var server *Geneshift
+		var server *GSA
 		var err error
 		if server, err = Preload(settings); err != nil {
 			log.Println(err)
 		}
 		Servers[settings.ID] = server
-		msg := fmt.Sprintf("***>>> Starting game feed for Geneshift %s (ID: %s)***", Servers[settings.ID].Version, settings.ID)
+		msg := fmt.Sprintf("***>>> Starting game feed for Gene Shift Auto %s (ID: %s)***", Servers[settings.ID].Version, settings.ID)
 		if _, err := session.ChannelMessageSend(settings.Channel, normalize(msg)); err != nil {
 			log.Printf("[%s/%s] Message error: %+v", settings.ID, settings.Channel, err)
 		}
@@ -103,7 +103,7 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 				Whence: Whence,
 			},
 			Follow: true,
-			ReOpen: true, // If the Geneshift server restarts, keep reading the file after trunc.
+			ReOpen: true, // If the GSA server restarts, keep reading the file after trunc.
 		}); err == nil {
 			Tails[settings.ID] = tailer // Append for Cleanup()
 			go func() {
@@ -139,8 +139,8 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 
 // PreloadLog attempts to read the log file as fast as possible,
 // prefilling bots and player data.
-func Preload(opts Logs) (*Geneshift, error) {
-	server := NewGeneshift()
+func Preload(opts Logs) (*GSA, error) {
+	server := NewGSA()
 	server.Killfeed = opts.Killfeed
 	f, err := os.Open(opts.File)
 	if err != nil {
