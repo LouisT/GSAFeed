@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -38,8 +39,8 @@ var (
 	logger                           = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 	IDs                              = []string{}
 
-	// List of bots for specific server IDs
-	DefaultBots = []string{"a civilian"}
+	// Hold all of the known bots for GSA
+	Bots = []string{}
 
 	// GSA server metadata
 	Servers map[string]*GSA = make(map[string]*GSA)
@@ -63,6 +64,14 @@ func main() {
 	if config, err = loadConfig(); err != nil {
 		log.Fatal(err)
 	}
+
+	// Import the list of bots
+	content, err := os.ReadFile(config.GSA.Bots)
+	if err != nil {
+		log.Fatal(err) // XXX: Handle error
+	}
+	re := regexp.MustCompile("(?s)//.*?\n|/\\*.*?\\*/")
+	Bots = strings.Split(string(re.ReplaceAll(content, nil)), "\n")
 
 	dg, err := discordgo.New("Bot " + config.Discord.Token)
 	if err != nil {
@@ -147,7 +156,7 @@ func main() {
 					defer tcancel()
 					buf := []byte{}
 					if err := chromedp.Run(tctx, chromedp.Tasks{
-						chromedp.Navigate(config.Servers),
+						chromedp.Navigate(config.GSA.Servers),
 						chromedp.WaitVisible("table.serverTable"),
 						chromedp.Screenshot("table.serverTable", &buf, chromedp.NodeVisible),
 					}); err != nil {

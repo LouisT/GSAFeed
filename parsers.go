@@ -44,7 +44,7 @@ var (
 		},
 		regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`): func(session *discordgo.Session, settings Logs, str string, r *regexp.Regexp, server *GSA) (string, bool) {
 			matches := r.FindStringSubmatch(str)
-			if ContainsI(server.Bots, matches[1]) && ContainsI(server.Bots, matches[2]) {
+			if ContainsI(Bots, matches[1]) && ContainsI(Bots, matches[2]) {
 				return "", false
 			}
 			if player, ok := server.Players[matches[1]]; ok {
@@ -70,12 +70,12 @@ var (
 			matches := r.FindStringSubmatch(str)
 			name, isbot := func(n string) (string, bool) { // Normalize player/bot name
 				for key := range server.Players {
-					if strings.EqualFold(n, key) {
+					if strings.EqualFold(n, key) { // XXX: Can be upper/lowercase at random!?
 						return key, false
 					}
 				}
-				for _, key := range server.Bots {
-					if strings.EqualFold(n, key) {
+				for _, key := range Bots {
+					if strings.EqualFold(n, key) { // XXX: Can be upper/lowercase at random!?
 						return fmt.Sprintf("[B] %s", key), true
 					}
 				}
@@ -128,7 +128,7 @@ var (
 				})
 			}
 			title := fmt.Sprintf(":trophy: Congratulations, ***%s***! They won the ***FINAL*** round!", matches[1])
-			if ContainsI(server.Bots, matches[1]) {
+			if ContainsI(Bots, matches[1]) {
 				title = fmt.Sprintf(":person_facepalming: A bot, **[B] %s**, has won the ***FINAL*** round!", matches[1])
 			}
 			if _, err := session.ChannelMessageSendEmbed(settings.Channel, &discordgo.MessageEmbed{
@@ -137,7 +137,7 @@ var (
 				Fields:    fields,
 				Timestamp: time.Now().Format(time.RFC3339),
 				Thumbnail: &discordgo.MessageEmbedThumbnail{
-					URL: "https://i.imgur.com/575ebif.gif",
+					URL: "https://i.imgur.com/575ebif.gif", // XXX: Make this configurable
 				},
 				Title: normalize(title),
 				Footer: &discordgo.MessageEmbedFooter{
@@ -162,7 +162,6 @@ var (
 		"Reset":        regexp.MustCompile(`(?i)\(\d+\): (HostNewRound|Restarting Match|Queuing Restart Due to New Player)`), // Clear bot list?
 		"AddPlayer":    regexp.MustCompile(`\(\d+\): (.+) joined with steamID: (\d+)`),
 		"RemovePlayer": regexp.MustCompile(`\(\d+\): Saving: (.+)`),
-		"AddBot":       regexp.MustCompile(`\(\d+\): Adding Bot: (.+) with target`),
-		"Kills":        regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`),
+		"Kills": regexp.MustCompile(`\(\d+\): (.+) killed (.+) with (.+)`),
 	}
 )

@@ -110,11 +110,7 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 				var last string
 				for line := range tailer.Lines {
 					if MetaParsers["Reset"].MatchString(line.Text) {
-						Servers[settings.ID].Bots = append([]string{}, DefaultBots...)
-					} else if MetaParsers["AddBot"].MatchString(line.Text) {
-						if match := MetaParsers["AddBot"].FindStringSubmatch(line.Text); len(match) == 2 {
-							Servers[settings.ID].Bots = append(Servers[settings.ID].Bots, match[1])
-						}
+						// XXX: Dead if, figure out what to reset!?
 					} else {
 						for rgx, compiler := range Parsers {
 							if last != line.Text && rgx.MatchString(line.Text) {
@@ -138,7 +134,7 @@ func MessageParser(session *discordgo.Session, settings Logs) {
 }
 
 // PreloadLog attempts to read the log file as fast as possible,
-// prefilling bots and player data.
+// prefilling player data.
 func Preload(opts Logs) (*GSA, error) {
 	server := NewGSA()
 	server.Killfeed = opts.Killfeed
@@ -162,7 +158,7 @@ func Preload(opts Logs) (*GSA, error) {
 				}
 			}
 		} else if MetaParsers["Reset"].MatchString(txt) {
-			server.Bots = append([]string{}, DefaultBots...)
+			// XXX: Dead if, figure out what to reset!?
 		} else if MetaParsers["Kills"].MatchString(txt) {
 			if match := MetaParsers["Kills"].FindStringSubmatch(txt); len(match) == 4 {
 				if player, ok := server.Players[match[1]]; ok {
@@ -183,10 +179,6 @@ func Preload(opts Logs) (*GSA, error) {
 		} else if MetaParsers["RemovePlayer"].MatchString(txt) {
 			if match := MetaParsers["RemovePlayer"].FindStringSubmatch(txt); len(match) == 2 {
 				delete(server.Players, match[1])
-			}
-		} else if MetaParsers["AddBot"].MatchString(txt) {
-			if match := MetaParsers["AddBot"].FindStringSubmatch(txt); len(match) == 2 {
-				server.Bots = append(server.Bots, match[1])
 			}
 		} else if !opts.Preload && strings.Contains(txt, "Finish Loading Sequence") {
 			server.CanEmit = true

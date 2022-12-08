@@ -1,6 +1,10 @@
 // Copy to config.hjson and/or config.dev.hjson
 {
-  "servers": "https://geneshiftauto.com/servers.php", # Link go the GSA servers list
+  // Gene Shift Auto specific configs
+  "gsa": {
+    "servers": "https://geneshiftauto.com/servers.php", // Link go the GSA servers list
+    "bots": "./assets/bots.txt" // Path to file containing the bot list
+  },
   "discord": {
     "avatar": {
       "file": "./assets/avatar.png", // Set the bot avatar from a file
@@ -27,7 +31,7 @@
   // Log settings for multiple Gene Shift Auto servers
   "logs": [
     {
-      "preload": true, // Attempt to preload all the log data (players + bots, mostly)
+      "preload": true, // Attempt to preload all the log data (players, mostly)
       "onstart": true, // Parse log files once bot is started
       "id": "GSA1", // Unique ID for this server log - !start GS1 (start log output)
       "file": "/path/to/01/data/log.txt", // Path to Gene Shift Auto log
@@ -35,7 +39,7 @@
       "killfeed": true // Enable the killfeed (off by default)
     },
     {
-      "preload": true, // Attempt to preload all the log data (players + bots, mostly)
+      "preload": true, // Attempt to preload all the log data (players, mostly)
       "onstart": false, // Parse log files once bot is started
       "id": "GSA2", // Unique ID for this server log - !stop GS2 (stop log output)
       "file": "/path/to/02/data/log.txt", // Path to Gene Shift Auto log

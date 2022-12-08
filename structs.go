@@ -4,7 +4,10 @@ import "time"
 
 // Config is the overall config file
 type Config struct {
-	Servers string `json:"servers"`
+	GSA struct {
+		Servers string `json:"servers"`
+		Bots    string `json:"bots"`
+	} `json:"gsa"`
 	Discord struct {
 		Avatar struct {
 			File   string `json:"file"`
@@ -49,7 +52,6 @@ func NewGSA() *GSA {
 	return &GSA{
 		RoundWins: make(map[int]string),
 		Players:   make(map[string]*Player),
-		Bots:      append([]string{}, DefaultBots...),
 	}
 }
 
@@ -57,7 +59,6 @@ func NewGSA() *GSA {
 func (g *GSA) reset(players bool) *GSA {
 	g.Finished = false
 	g.RoundWins = make(map[int]string)
-	g.Bots = append([]string{}, DefaultBots...)
 	if players {
 		g.Players = make(map[string]*Player)
 	}
