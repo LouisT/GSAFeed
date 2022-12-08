@@ -88,11 +88,11 @@ func (p *Player) Reset() *Player {
 	return p
 }
 
-// selfdestruct removes a player from the list in 5 minutes
+// Selfdestruct removes a player from the list in 5 minutes
 // if they don't rejoin the server after a match
-func (p *Player) selfdestruct(list map[string]*Player) *Player {
+func (p *Player) Selfdestruct(server *GSA) *Player {
 	p.timer = time.AfterFunc(time.Minute*5, func() {
-		delete(list, p.Name)
+		delete(server.Players, p.Name)
 	})
 
 	return p
