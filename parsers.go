@@ -147,7 +147,7 @@ var (
 				log.Println(err)
 			}
 			for _, player := range server.Players {
-				player.Reset().selfdestruct(server.Players)
+				player.Reset().selfdestruct(server.Players) // XXX: Fix this!?
 			}
 			return "", false
 		},

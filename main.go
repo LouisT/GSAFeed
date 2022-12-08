@@ -70,8 +70,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err) // XXX: Handle error
 	}
-	re := regexp.MustCompile("(?s)//.*?\n|/\\*.*?\\*/")
-	Bots = strings.Split(string(re.ReplaceAll(content, nil)), "\n")
+	re := regexp.MustCompile("(?s)//.*?\n|/\\*.*?\\*/|\\s{2,}")
+	Bots = strings.Split(strings.TrimSpace(string(re.ReplaceAll(content, nil))), "\n")
 
 	dg, err := discordgo.New("Bot " + config.Discord.Token)
 	if err != nil {

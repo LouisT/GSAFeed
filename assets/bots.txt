@@ -327,3 +327,6 @@ Intuition
 Teal Spiral
 sorcer3215
 lobbo Fury
+
+/* Technically not a bot but still NPC */
+a civilian
